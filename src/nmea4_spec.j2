@@ -1,0 +1,41 @@
+{% include "head.j2" %}
+
+/* {{ descr }} */
+#[derive(Debug, Clone)]
+pub struct Nmea{{ name }}Message<'a> { 
+    {% for field in fields %}pub {{ field.name }}: {{ field.type }},             // {{ field.descr }}
+    {% endfor %}
+}
+
+impl<'a> Nmea{{ name }}Message<'a> {
+    pub fn new() -> Nmea{{ name }}Message<'a> {
+        Nmea{{ name }}Message { 
+            {% for field in fields %}{{ field.name }}: {{ field.default }},
+            {% endfor %}
+        }
+    }
+}
+
+impl<'a> MessageFields<'a> for Nmea{{ name }}Message<'a> {
+    fn clear(&mut self) { 
+        {% for field in fields %}self.{{ field.name }}= {{ field.default }};
+        {% endfor %}
+    }
+
+    fn get_field_mut(&mut self, idx: u8) -> &mut dyn FromSlice<'a> {
+        match idx {
+            {% for field in fields %}{{ loop.index -1 }} => &mut self.{{ field.name }},
+            {% endfor %}
+            _ => panic!("Invalid field index"),
+        }
+    }
+
+    #[inline]
+    fn field_count(&self) -> u8 {
+        {{ fields|length }}
+    }
+
+    fn get_addr(&self) -> AddrField<'a> {
+        AddrField::new("{{ tag }}".as_bytes())
+    }
+}
