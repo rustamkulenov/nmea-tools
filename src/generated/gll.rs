@@ -6,18 +6,18 @@ use crate::messages::{MessageFields, FromSlice, AddrField};
 
 /* GLL NMEA message v4 */
 #[derive(Debug, Clone)]
-pub struct NmeaGllMessage<'a> { 
+pub struct NmeaGllMessage { 
     pub latitude: f64,             // 
     pub latitude_dir: u8,             // 
     pub longitude: f64,             // 
     pub longitude_dir: u8,             // 
-    pub utc: Option<&'a str>,             // 
+    pub utc: Option<String>,             // 
     pub status: Option<u8>,             // 
     
 }
 
-impl<'a> NmeaGllMessage<'a> {
-    pub fn new() -> NmeaGllMessage<'a> {
+impl NmeaGllMessage {
+    pub fn new() -> NmeaGllMessage {
         NmeaGllMessage { 
             latitude: 0.0,
             latitude_dir: b'N',
@@ -30,7 +30,7 @@ impl<'a> NmeaGllMessage<'a> {
     }
 }
 
-impl<'a> MessageFields<'a> for NmeaGllMessage<'a> {
+impl MessageFields for NmeaGllMessage {
     fn clear(&mut self) { 
         self.latitude= 0.0;
         self.latitude_dir= b'N';
@@ -41,7 +41,7 @@ impl<'a> MessageFields<'a> for NmeaGllMessage<'a> {
         
     }
 
-    fn get_field_mut(&mut self, idx: u8) -> &mut (dyn FromSlice<'a> + 'a) {
+    fn get_field_mut(&mut self, idx: u8) -> &mut dyn FromSlice {
         match idx {
             0 => &mut self.latitude,
             1 => &mut self.latitude_dir,
@@ -59,7 +59,13 @@ impl<'a> MessageFields<'a> for NmeaGllMessage<'a> {
         6
     }
 
-    fn get_addr(&self) -> AddrField<'a> {
+    #[inline]
+    fn get_addr(&self) -> AddrField<'static> {
         AddrField::new("GPGLL".as_bytes())
+    }
+
+    #[inline]
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }

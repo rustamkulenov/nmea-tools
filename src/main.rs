@@ -1,9 +1,10 @@
 use std::{
     env,
     fs::File,
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader}, any::Any,
 };
 
+use generated::gll::NmeaGllMessage;
 use messages::{MessageFields, MessagesMap};
 use nmea_parser::NmeaParser;
 
@@ -25,4 +26,7 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-fn callback(msg: Box<dyn MessageFields>) -> () {}
+fn callback(msg: &dyn Any) -> () {
+    let gll = msg.downcast_ref::<NmeaGllMessage>().unwrap();
+    println!("{:?}", gll);
+}

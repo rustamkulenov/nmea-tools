@@ -10,12 +10,12 @@ pub struct NmeaMessage<'a> {
 }
 
 pub trait HandleField<'buf> {
-    fn handle(&mut self, addr_field: &'buf [u8], field_idx: u8, field: &'buf [u8]);
+    fn handle(&'_ mut self, addr_field: &'buf [u8], field_idx: u8, field: &'buf [u8]);
 }
 
 pub fn get_message_body<'buf, 'a>(
     buf: &'buf [u8], // Source bufer
-    field_handler: &'a mut (dyn HandleField<'buf> + 'a),
+    field_handler: &'a mut dyn HandleField<'buf>,
 ) -> NmeaMessage<'buf> 
 where 'buf:'a{
     assert!(buf.len() > 10, "Too short NMEA message");

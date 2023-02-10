@@ -31,7 +31,7 @@
             },
             {
                 "name": "utc",
-                "type": "Option<&'a str>",
+                "type": "Option<String>",
                 "default": "None",
                 "descr": ""
             },

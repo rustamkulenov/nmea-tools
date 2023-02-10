@@ -1,14 +1,14 @@
 {% include "head.j2" %}
 
 /* {{ descr }} */
-#[derive(Debug, Clone)]
-pub struct Nmea{{ name }}Message<'a> { 
+#[derive(Debug)]
+pub struct Nmea{{ name }}Message { 
     {% for field in fields %}pub {{ field.name }}: {{ field.type }},             // {{ field.descr }}
     {% endfor %}
 }
 
-impl<'a> Nmea{{ name }}Message<'a> {
-    pub fn new() -> Nmea{{ name }}Message<'a> {
+impl Nmea{{ name }}Message {
+    pub fn new() -> Nmea{{ name }}Message {
         Nmea{{ name }}Message { 
             {% for field in fields %}{{ field.name }}: {{ field.default }},
             {% endfor %}
@@ -16,13 +16,13 @@ impl<'a> Nmea{{ name }}Message<'a> {
     }
 }
 
-impl<'a> MessageFields<'a> for Nmea{{ name }}Message<'a> {
+impl MessageFields for Nmea{{ name }}Message {
     fn clear(&mut self) { 
         {% for field in fields %}self.{{ field.name }}= {{ field.default }};
         {% endfor %}
     }
 
-    fn get_field_mut(&mut self, idx: u8) -> &mut dyn FromSlice<'a> {
+    fn get_field_mut(&mut self, idx: u8) -> &mut dyn FromSlice {
         match idx {
             {% for field in fields %}{{ loop.index -1 }} => &mut self.{{ field.name }},
             {% endfor %}
@@ -35,7 +35,13 @@ impl<'a> MessageFields<'a> for Nmea{{ name }}Message<'a> {
         {{ fields|length }}
     }
 
-    fn get_addr(&self) -> AddrField<'a> {
+    #[inline]
+    fn get_addr(&self) -> AddrField<'static> {
         AddrField::new("{{ tag }}".as_bytes())
+    }
+
+    #[inline]
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }

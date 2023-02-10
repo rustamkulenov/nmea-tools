@@ -1,33 +1,33 @@
-use std::{io::BufRead, ops::Deref};
+use std::{any::Any, io::BufRead};
 
+use crate::messages::{AddrField, MessagesMap};
 use nmeaParseTest::{get_message_body, HandleField};
-
-use crate::messages::{AddrField, MessageFields, MessagesMap};
 
 const BUF_SIZE: usize = 1024 * 1024 * 5;
 
 pub struct NmeaParser {}
 
-/* Message parsed callback */
-type FnMsgParsed<'buf> = dyn Fn(Box<dyn MessageFields<'buf> + 'buf>) -> ();
+/* Message parsed callback
+    Parameter can be downcasted to concrete message class:
 
-pub struct FieldParseHandler<'a, 'buf> {
-    all_messages: &'a mut MessagesMap<'a, 'buf>,
-    callback: &'a FnMsgParsed<'buf>,
+*/
+type FnMsgParsed = dyn Fn(&dyn Any) -> ();
+
+pub struct FieldParseHandler<'a> {
+    all_messages: &'a mut MessagesMap<'a>,
+    callback: &'a FnMsgParsed,
 }
 
 impl NmeaParser {
-    pub fn parse(br: &mut Box<dyn BufRead>, callback: &FnMsgParsed) -> std::io::Result<()> {
+    pub fn parse<'buf>(
+        br: &mut Box<dyn BufRead>,
+        callback: &'static FnMsgParsed,
+    ) -> std::io::Result<()> {
         let mut buf = vec![0u8; BUF_SIZE];
         let mut msgs_map = MessagesMap::new();
         msgs_map.add_all_messages();
 
-        let mycallback = |msg| -> () {
-            //callback(msg);
-        };
-
-        let mut h = FieldParseHandler::new(&mut msgs_map, &mycallback);
-        //let handler: &mut dyn HandleField<'_> = &mut h;
+        let mut h = FieldParseHandler::new(&mut msgs_map, &callback);
 
         loop {
             let r = br.read(&mut buf);
@@ -39,11 +39,8 @@ impl NmeaParser {
     }
 }
 
-impl<'a, 'buf> FieldParseHandler<'a, 'buf> {
-    fn new(
-        msgs_map: &'a mut MessagesMap<'a, 'buf>,
-        callback: &'a FnMsgParsed<'buf>,
-    ) -> FieldParseHandler<'a, 'buf> {
+impl<'a> FieldParseHandler<'a> {
+    fn new(msgs_map: &'a mut MessagesMap<'a>, callback: &'a FnMsgParsed) -> FieldParseHandler<'a> {
         FieldParseHandler {
             all_messages: msgs_map,
             callback,
@@ -51,28 +48,26 @@ impl<'a, 'buf> FieldParseHandler<'a, 'buf> {
     }
 }
 
-impl<'a, 'buf> HandleField<'buf> for FieldParseHandler<'a, 'buf> {
+impl<'a, 'buf: 'a> HandleField<'buf> for FieldParseHandler<'a> {
     fn handle(&mut self, addr_field: &'buf [u8], field_idx: u8, field: &'buf [u8]) {
-        let m = self
+        let boxed_msg = self
             .all_messages
             .get_mut(AddrField::new(addr_field))
             .unwrap();
         if field_idx == 0 {
-            m.clear();
+            boxed_msg.clear();
         }
 
-        let f = m.get_field_mut(field_idx);
+        let f = boxed_msg.get_field_mut(field_idx);
         f.set_from_slice(field);
 
-        if field_idx == m.field_count() {
-            // Last field parsed, notify listeners
-            let m = self
-                .all_messages
-                .get(AddrField::new(addr_field))
-                .unwrap();
+        println!("Field {:?} from {:?}", field_idx, boxed_msg.field_count());
 
-//            let m = (**m);
-//            (self.callback)(m);
+        if field_idx == boxed_msg.field_count() - 1 {
+            // Last field parsed, notify listeners
+            let boxed_msg = self.all_messages.get(AddrField::new(addr_field)).unwrap();
+            let orig_msg: &dyn Any = boxed_msg.as_any();
+            (self.callback)(orig_msg);
         }
     }
 }
