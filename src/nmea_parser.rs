@@ -1,6 +1,6 @@
 use std::{
     any::Any,
-    io::{BufRead, BufReader, Read}, ops::Add,
+    io::{BufRead, BufReader, Read},
 };
 
 use nmeaParseTest::messages::{AddrField, MessagesMap};
@@ -39,8 +39,9 @@ impl NmeaParser {
                 if buf.is_empty() {
                     break;
                 };
-                let _ = get_message_body(&buf, &mut h);
-                12 // TODO: get from get_message_body()
+                let (consume_amt, _) = get_message_body(&buf, &mut h);
+                println!("Consumed {consume_amt} chars");
+                consume_amt
             };
             br.consume(amount);
         }

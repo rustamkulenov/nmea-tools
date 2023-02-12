@@ -1,9 +1,4 @@
-use std::{
-    any::Any,
-    env,
-    fs::File,
-    io::{BufRead, BufReader, Read},
-};
+use std::{any::Any, env, fs::File, io::Read};
 
 use nmeaParseTest::generated::gll::NmeaGllMessage;
 use nmea_parser::NmeaParser;
