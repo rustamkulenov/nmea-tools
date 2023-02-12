@@ -1,14 +1,4 @@
-use std::vec;
-
-use crate::messages::{MessageFields, MessagesMap};
-
-use self::gll::NmeaGllMessage;
-
-pub mod gll;
-
-pub enum NmeaMessages {
-    GLL,
-}
+pub mod nmea3;
 
 pub enum TalkerIds {
     GP, // GPS
@@ -38,14 +28,3 @@ pub fn is_talker_id(v: &[u8]) -> bool {
     ALL_TALKER_IDS.contains(&s) //TODO:  O(n) complexity. Replace with hashset!!!
 }
 
-/// Generated fn for initializing all message types.
-impl MessagesMap {
-    pub fn add_all_messages(&mut self) {
-        let msgs: Vec<Box<dyn MessageFields>> = vec![Box::new(NmeaGllMessage::new())];
-
-        for m in msgs {
-            let k = m.get_addr();
-            self.msgs.insert(k, m);
-        }
-    }
-}

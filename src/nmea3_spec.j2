@@ -1,0 +1,72 @@
+{% include "head.j2" %}
+
+/// Generated fn for initializing all message types.
+impl MessagesMap {
+    pub fn add_all_messages(&mut self) {
+        let msgs: Vec<Box<dyn MessageFields>> = vec![
+            {% for message in messages%}Box::new(NmeaGllMessage::new()),        //  {{ message.tag }}
+            {% endfor %}];
+
+        for m in msgs {
+            let k = m.get_addr();
+            self.msgs.insert(k, m);
+        }
+    }
+}
+
+/// All implemented NMEA messages.
+pub enum NmeaMessages {
+    {% for message in messages%}{{ message.tag }},
+{% endfor %}}
+
+{% for message in messages%}/// {{ message.descr }}
+#[derive(Debug)]
+pub struct Nmea{{ message.name }}Message { 
+    {% for field in message.fields %}pub {{ field.name }}: {{ field.type }},             // {{ field.descr }}
+    {% endfor %}
+}
+
+impl Nmea{{ message.name }}Message {
+    pub fn new() -> Nmea{{ message.name }}Message {
+        Nmea{{ message.name }}Message { 
+            {% for field in message.fields %}{{ field.name }}: {{ field.default }},
+            {% endfor %}
+        }
+    }
+}
+
+impl MessageFields for Nmea{{ message.name }}Message {
+    fn clear(&mut self) { 
+        {% for field in message.fields %}self.{{ field.name }}= {{ field.default }};
+        {% endfor %}
+    }
+
+    fn get_field_mut(&mut self, idx: u8) -> &mut dyn FromSlice {
+        match idx {
+            {% for field in message.fields %}{{ loop.index -1 }} => &mut self.{{ field.name }},
+            {% endfor %}
+            _ => panic!("Invalid field index"),
+        }
+    }
+
+    #[inline]
+    fn field_count(&self) -> u8 {
+        {{ message.fields|length }}
+    }
+
+    #[inline]
+    fn get_addr(&self) -> AddrField<'static> {
+        AddrField::new("{{ message.tag }}".as_bytes())
+    }
+
+    #[inline]
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    #[inline]
+    fn message_type(&self) -> NmeaMessages {
+        NmeaMessages::{{ message.tag }}
+    }
+}
+{% endfor %}

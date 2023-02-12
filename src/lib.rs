@@ -38,7 +38,6 @@ pub fn get_message_body<'buf>(
         char::from(buf[0])
     );
 
-    let mut consume_amt = 0;
     let mut addr_end: usize = 1;
     let mut crc = 0u8;
     let mut crc_ok = false;
@@ -82,7 +81,7 @@ pub fn get_message_body<'buf>(
         crc_ok = expected_crc == crc;
     }
 
-    consume_amt = asterisk_pos;
+    let mut consume_amt = asterisk_pos;
     while asterisk_pos < buf.len() && buf[asterisk_pos] != LF {
         consume_amt += 1;
         asterisk_pos += 1;

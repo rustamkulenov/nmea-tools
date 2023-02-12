@@ -1,3 +1,3 @@
 #!/bin/sh
 
-./autogen.py nmea4_spec.j2
+./autogen.py nmea3_spec.j2

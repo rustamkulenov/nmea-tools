@@ -5,7 +5,7 @@ use std::{
     hash::Hash,
 };
 
-use crate::generated::is_talker_id;
+use crate::generated::{is_talker_id, nmea3::NmeaMessages};
 
 /// Represents a NMEA message with list of values.
 pub trait MessageFields {
@@ -18,6 +18,7 @@ pub trait MessageFields {
     fn clear(&mut self);
     fn get_addr(&self) -> AddrField<'static>;
     fn as_any(&self) -> &dyn Any;
+    fn message_type(&self) -> NmeaMessages;
 }
 
 /// Address field. May contain talker_id (e.g. 'GP' or 'GL').

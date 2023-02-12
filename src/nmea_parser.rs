@@ -3,22 +3,30 @@ use std::{
     io::{BufRead, BufReader, Read},
 };
 
-use nmeaParseTest::messages::{AddrField, MessagesMap};
+use nmeaParseTest::{
+    generated::nmea3::NmeaMessages,
+    messages::{AddrField, MessagesMap},
+};
 use nmeaParseTest::{get_message_body, HandleField};
 
 pub struct NmeaParser {}
 
 /// Message parsed callback.
-/// Parameter can be downcasted to concrete message class:
+/// Parameter can be downcasted to concrete message class based on msg_type:
 ///
 /// # Example
 /// ```no_run
-///    fn callback(msg: &dyn Any) -> () {
-///       let gll = msg.downcast_ref::<NmeaGllMessage>().unwrap();
-///        println!("{:?}", gll);
+///    fn callback(msg_type: NmeaMessages, msg: &dyn Any) -> () {
+///    match msg_type {
+///        NmeaMessages::GLL => {
+///            let gll = msg.downcast_ref::<NmeaGllMessage>().unwrap();
+///            println!("{:?}", gll);
+///        }
+///        _ => panic!(),
 ///    }
+///}
 /// ```
-type FnMsgParsed = dyn Fn(&dyn Any) -> ();
+type FnMsgParsed = dyn Fn(NmeaMessages, &dyn Any) -> ();
 
 pub struct FieldParseHandler<'a> {
     all_messages: &'a mut MessagesMap,
@@ -72,8 +80,9 @@ impl<'a> HandleField for FieldParseHandler<'a> {
         if field_idx == boxed_msg.field_count() - 1 {
             // Last field parsed, notify listeners
             let boxed_msg = self.all_messages.get(&addr_field).unwrap();
+            let msg_type = boxed_msg.message_type();
             let orig_msg: &dyn Any = boxed_msg.as_any();
-            (self.callback)(orig_msg);
+            (self.callback)(msg_type, orig_msg);
         }
     }
 }
