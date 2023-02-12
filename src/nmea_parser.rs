@@ -59,6 +59,8 @@ impl<'a> FieldParseHandler<'a> {
     }
 }
 
+/// Trait as a callback for field parsing events.
+/// Shall detect message type by addr field and set it's field value.
 impl<'a> HandleField for FieldParseHandler<'a> {
     fn handle(&mut self, addr_field: &AddrField<'_>, field_idx: u8, field: &[u8]) {
         let boxed_msg = self.all_messages.get_mut(addr_field).unwrap();

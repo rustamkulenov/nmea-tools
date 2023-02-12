@@ -10,22 +10,27 @@ const COMMA: u8 = b',';
 const LF: u8 = 0x0A;
 const CR: u8 = 0x0D;
 
+/// Semi-parsed NMEA message.
+/// Contains main message parts: address field (from '$' to ',') and not parsed fields.
 pub struct NmeaMessage<'a> {
     pub addr_field: &'a [u8],
     pub fields: &'a [u8],
     pub crc_ok: bool,
 }
 
+/// Trait for parser a callback. Is called when a fields is parsed.
+/// Is responsible to handle field's value, convert into required format and store.
 pub trait HandleField {
     fn handle(&mut self, addr_field: &AddrField<'_>, field_idx: u8, field: &[u8]);
 }
 
-/// Parses single message from buffer until CRLF.
-/// Calls a callback on each field detected.
+/// Parses single message from buffer until LF.
+/// Calls a handler's callback on each field detected.
+/// See returned `[consume_amt]` to know how many bytes were read from the `[buf]`.
 pub fn get_message_body<'buf>(
     buf: &'buf [u8], // Source bufer
     field_handler: &mut (dyn HandleField),
-) -> (usize, NmeaMessage<'buf>) {
+) -> (usize /* consume_amt */, NmeaMessage<'buf>) {
     assert!(buf.len() > 10, "Too short NMEA message");
     assert!(
         buf[0] == DOLLAR,
@@ -96,6 +101,7 @@ pub fn get_message_body<'buf>(
     );
 }
 
+/// Converts 2 char ASCII hex value to a byte value.
 fn hex_chars_to_u8(h: &[u8]) -> u8 {
     let mut res: u8 = 0;
     res += 16

@@ -1,11 +1,13 @@
 use std::{
     any::Any,
     borrow::{Borrow, Cow},
-    collections::HashMap, hash::Hash,
+    collections::HashMap,
+    hash::Hash,
 };
 
 use crate::generated::is_talker_id;
 
+/// Represents a NMEA message with list of values.
 pub trait MessageFields {
     fn set_field(&mut self, idx: u8, value: &[u8]) {
         self.get_field_mut(idx).set_from_slice(value);
@@ -18,9 +20,10 @@ pub trait MessageFields {
     fn as_any(&self) -> &dyn Any;
 }
 
-/* Address field */
+/// Address field. May contain talker_id (e.g. 'GP' or 'GL').
 #[derive(PartialEq, Eq)]
 pub struct AddrField<'a> {
+    /// Message type\address (e.g. 'GLL' or 'RMC').
     pub data: &'a [u8],
     pub talker_id: &'a str,
 }
@@ -41,24 +44,24 @@ impl<'a> AddrField<'a> {
     }
 }
 
-impl<'a> Hash for AddrField<'a>{
+/// Hash implemented for AddrField to compare only message type without talker_id.
+impl<'a> Hash for AddrField<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.data.hash(state);
     }
 }
 
-/* This trait implemented to fix hash.Get_mut() issue and to get value by &[u8] to reduce lifetime. */
+/// This trait implemented to fix hash.Get_mut() issue and to get value by &[u8] to reduce lifetime.
 impl<'a> Borrow<[u8]> for AddrField<'a> {
     fn borrow(&self) -> &[u8] {
         &self.data
     }
 }
 
-/* Map of NMEA messages by addr field */
+/// Map of NMEA messages by address\message type.
 pub struct MessagesMap {
-    /* Key shall have references with lifetime 'static.
-       Values shall be structs implementing MessageFields with lifetime 'static.
-    */
+    /// Key shall have references with lifetime 'static.
+    /// Values shall be structs implementing MessageFields with lifetime 'static.
     pub msgs: HashMap<AddrField<'static>, Box<dyn MessageFields + 'static>>,
 }
 
@@ -81,7 +84,9 @@ impl MessagesMap {
     }
 }
 
-//************************ Common for all types used in NMEA
+//************************ Common for all types used in NMEA   ************************************
+
+/// Trait for message fields to set field value regardless of message type.
 pub trait FromSlice {
     fn set_from_slice(&mut self, value: &[u8]);
     fn as_string(&self) -> Cow<str>;
