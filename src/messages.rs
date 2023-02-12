@@ -1,6 +1,10 @@
-use std::{any::Any, borrow::Cow, collections::HashMap};
+use std::{
+    any::Any,
+    borrow::{Borrow, Cow},
+    collections::HashMap,
+};
 
-pub trait MessageFields: 'static {
+pub trait MessageFields {
     fn set_field(&mut self, idx: u8, value: &[u8]) {
         self.get_field_mut(idx).set_from_slice(value);
     }
@@ -24,31 +28,31 @@ impl<'a> AddrField<'a> {
     }
 }
 
-impl<'a> AsRef<[u8]> for AddrField<'a> {
-    fn as_ref(&self) -> &[u8] {
-        self.data
+/* This trait implemented to fix hash.Get_mut() issue and to get value by &[u8] to reduce lifetime. */
+impl<'a> Borrow<[u8]> for AddrField<'a> {
+    fn borrow(&self) -> &[u8] {
+        &self.data
     }
 }
 
 /* Map of NMEA messages by addr field */
-pub struct MessagesMap<'a> {
-    /* Key shall have references with lifetime 'a. Actually it will be 'static.
-       Values shall be structs implementing MessageFields<'a> with lifetime 'buf. I.e. shall live as long as buffer
-       of parser.
+pub struct MessagesMap {
+    /* Key shall have references with lifetime 'static.
+       Values shall be structs implementing MessageFields with lifetime 'static.
     */
-    pub msgs: HashMap<AddrField<'a>, Box<dyn MessageFields + 'static>>,
+    pub msgs: HashMap<AddrField<'static>, Box<dyn MessageFields + 'static>>,
 }
 
-impl<'a> MessagesMap<'a> {
-    pub fn get(&self, addr: AddrField<'a>) -> Option<&Box<dyn MessageFields + 'static>> {
-        self.msgs.get(&addr)
+impl MessagesMap {
+    pub fn get(&self, addr: &AddrField<'_>) -> Option<&Box<dyn MessageFields + 'static>> {
+        self.msgs.get(addr.data)
     }
 
     pub fn get_mut(
         &mut self,
-        addr: AddrField<'a>,
+        addr: &AddrField<'_>,
     ) -> Option<&mut Box<dyn MessageFields + 'static>> {
-        self.msgs.get_mut(&addr)
+        self.msgs.get_mut(addr.data)
     }
 
     pub fn new() -> Self {

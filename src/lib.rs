@@ -1,3 +1,8 @@
+use messages::AddrField;
+
+pub mod generated;
+pub mod messages;
+
 const DOLLAR: u8 = b'$';
 const EXCLAMATION: u8 = b'!';
 const ASTERISK: u8 = b'*';
@@ -9,15 +14,16 @@ pub struct NmeaMessage<'a> {
     pub crc_ok: bool,
 }
 
-pub trait HandleField<'buf> {
-    fn handle(&'_ mut self, addr_field: &'buf [u8], field_idx: u8, field: &'buf [u8]);
+pub trait HandleField {
+    fn handle(&mut self, addr_field: &AddrField<'_>, field_idx: u8, field: &[u8]);
 }
 
-pub fn get_message_body<'buf, 'a>(
+/// Parses single message from buffer until CRLF.
+/// Calls a callback on each field detected.
+pub fn get_message_body<'buf>(
     buf: &'buf [u8], // Source bufer
-    field_handler: &'a mut dyn HandleField<'buf>,
-) -> NmeaMessage<'buf> 
-where 'buf:'a{
+    field_handler: &mut (dyn HandleField),
+) -> (u8, NmeaMessage<'buf>) {
     assert!(buf.len() > 10, "Too short NMEA message");
     assert!(
         buf[0] == DOLLAR,
@@ -25,6 +31,7 @@ where 'buf:'a{
         char::from(buf[0])
     );
 
+    let consume_amt = 0u8;
     let mut addr_end: usize = 1;
     let mut crc = 0u8;
 
@@ -35,6 +42,7 @@ where 'buf:'a{
     }
     crc ^= COMMA;
 
+    let addr_field = AddrField::new(&buf[1..addr_end]);
     let mut asterisk_pos = addr_end + 1; // next char after 1st ','
     let mut field_start = addr_end + 1;
     let mut field_idx: u8 = 0;
@@ -49,7 +57,7 @@ where 'buf:'a{
             let field = &buf[field_start..asterisk_pos];
             field_start = asterisk_pos + 1;
 
-            field_handler.handle(&buf[1..addr_end], field_idx, field);
+            field_handler.handle(&addr_field, field_idx, field);
 
             field_idx += 1;
         }
@@ -66,11 +74,14 @@ where 'buf:'a{
         assert!(expected_crc == crc, "Invalid CRC");
     }
 
-    return NmeaMessage {
-        addr_field: &buf[1..addr_end],
-        fields: &buf[addr_end..asterisk_pos - 1],
-        crc_ok: true,
-    };
+    return (
+        consume_amt,
+        NmeaMessage {
+            addr_field: &buf[1..addr_end],
+            fields: &buf[addr_end..asterisk_pos - 1],
+            crc_ok: true,
+        },
+    );
 }
 
 fn hex_chars_to_u8(h: &[u8]) -> u8 {
@@ -91,7 +102,7 @@ fn hex_chars_to_u8(h: &[u8]) -> u8 {
 
 #[cfg(test)]
 mod tests {
-    use crate::{get_message_body, hex_chars_to_u8, HandleField, NmeaMessage};
+    use crate::{get_message_body, hex_chars_to_u8, messages::AddrField, HandleField, NmeaMessage};
 
     struct FieldHandlerStub {}
 
@@ -101,11 +112,11 @@ mod tests {
         }
     }
 
-    impl HandleField<'_> for FieldHandlerStub {
-        fn handle(&mut self, addr_field: &[u8], field_idx: u8, field: &[u8]) {
+    impl HandleField for FieldHandlerStub {
+        fn handle(&mut self, addr_field: &AddrField, field_idx: u8, field: &[u8]) {
             println!(
                 "{} {} >>> {}",
-                String::from_utf8(addr_field.to_vec()).unwrap(),
+                String::from_utf8(addr_field.data.to_vec()).unwrap(),
                 field_idx,
                 String::from_utf8(field.to_vec()).unwrap()
             );
@@ -113,7 +124,7 @@ mod tests {
     }
 
     pub fn get_message_body_stub<'a>(buf: &'a [u8]) -> NmeaMessage {
-        get_message_body(buf, &mut FieldHandlerStub::new())
+        get_message_body(buf, &mut FieldHandlerStub::new()).1
     }
 
     #[test]
