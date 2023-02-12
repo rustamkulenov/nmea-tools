@@ -1,8 +1,10 @@
 use std::{
     any::Any,
     borrow::{Borrow, Cow},
-    collections::HashMap,
+    collections::HashMap, hash::Hash,
 };
+
+use crate::generated::is_talker_id;
 
 pub trait MessageFields {
     fn set_field(&mut self, idx: u8, value: &[u8]) {
@@ -17,14 +19,31 @@ pub trait MessageFields {
 }
 
 /* Address field */
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq)]
 pub struct AddrField<'a> {
     pub data: &'a [u8],
+    pub talker_id: &'a str,
 }
 
 impl<'a> AddrField<'a> {
     pub fn new(data: &'a [u8]) -> Self {
-        AddrField { data }
+        if data.len() > 3 && is_talker_id(&data[0..2]) {
+            AddrField {
+                data: &data[2..],
+                talker_id: std::str::from_utf8(&data[0..2]).unwrap(),
+            }
+        } else {
+            AddrField {
+                data,
+                talker_id: "",
+            }
+        }
+    }
+}
+
+impl<'a> Hash for AddrField<'a>{
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.data.hash(state);
     }
 }
 

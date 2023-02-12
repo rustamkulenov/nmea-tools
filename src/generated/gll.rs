@@ -61,7 +61,7 @@ impl MessageFields for NmeaGllMessage {
 
     #[inline]
     fn get_addr(&self) -> AddrField<'static> {
-        AddrField::new("GPGLL".as_bytes())
+        AddrField::new("GLL".as_bytes())
     }
 
     #[inline]

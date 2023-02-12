@@ -1,3 +1,5 @@
+use std::{collections::HashSet, vec};
+
 use crate::messages::{MessageFields, MessagesMap};
 
 use self::gll::NmeaGllMessage;
@@ -27,6 +29,16 @@ pub enum TalkerIds {
     VW, // Speed log, water, mechanical
     WI, // Weather Instruments
 }
+
+pub const ALL_TALKER_IDS: [[u8; 2]; 2] = [[0x47, 0x50], [0x47, 0x4C]]; // GP, GL
+//pub const ALL_TALKER_IDS_HS: HashSet<[u8; 2]> = HashSet::from_iter(ALL_TALKER_IDS);
+
+pub fn is_talker_id(v: &[u8]) -> bool {
+    assert!(v.len() == 2);
+    let s: [u8; 2] = [v[0], v[1]];
+    ALL_TALKER_IDS.contains(&s) //TODO:  O(n) complexity. Replace with hashset!
+}
+
 
 /* Generated constructor for initializing all message types */
 impl MessagesMap {

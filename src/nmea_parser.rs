@@ -39,8 +39,8 @@ impl NmeaParser {
                 if buf.is_empty() {
                     break;
                 };
-                let (consume_amt, _) = get_message_body(&buf, &mut h);
-                println!("Consumed {consume_amt} chars");
+                let (consume_amt, msg) = get_message_body(&buf, &mut h);
+                println!("Consumed {consume_amt} chars. CRC ok: {:?}", msg.crc_ok);
                 consume_amt
             };
             br.consume(amount);
@@ -62,10 +62,6 @@ impl<'a> FieldParseHandler<'a> {
 impl<'a> HandleField for FieldParseHandler<'a> {
     fn handle(&mut self, addr_field: &AddrField<'_>, field_idx: u8, field: &[u8]) {
         let boxed_msg = self.all_messages.get_mut(addr_field).unwrap();
-
-        if field_idx == 0 {
-            boxed_msg.clear();
-        }
 
         boxed_msg.set_field(field_idx, field);
 
