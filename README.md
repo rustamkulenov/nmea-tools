@@ -6,8 +6,8 @@ Tools for NMEA protocol.
 1. NMEA Parser (written in rust) - quick (no proof yet, but I hope :) ) NMEA parser with ability to generate rust code for specific NMEA version from [json protocol specification](/src/nmea4_spec.j2.json) using [autogen](https://github.com/rustamkulenov/autogen). I tried to reuse mem buffer, minimize heap allocations, prefer refs over smart pointers, decrease number of indirection. For a flexibility ``dyn traits`` are used that leads to dynamic calls dispatch.   
 
 ### TODOs
-* Better error handling (via Result<>). 
-* [```is_talker_id```](/src/generated/mod.rs#L33) fn optimization (replace with Hashset).
+* Better error handling (via ```Result<T,E>```). Currently code ```panic!()``` in exceptional situations. 
+* [```is_talker_id()```](/src/generated/mod.rs#L33) function optimization (replace with Hashset). Currently it has O(n) complexity.
 
 ### How to change NMEA specification (version)
 1. Create new json file, or change [existing specification](./src/nmea3_spec.j2.json);
