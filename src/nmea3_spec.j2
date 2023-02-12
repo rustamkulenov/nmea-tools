@@ -4,7 +4,7 @@
 impl MessagesMap {
     pub fn add_all_messages(&mut self) {
         let msgs: Vec<Box<dyn MessageFields>> = vec![
-            {% for message in messages%}Box::new(NmeaGllMessage::new()),        //  {{ message.tag }}
+            {% for message in messages%}Box::new(Nmea{{ message.name }}Message::new()),        //  {{ message.tag }}
             {% endfor %}];
 
         for m in msgs {
@@ -15,11 +15,13 @@ impl MessagesMap {
 }
 
 /// All implemented NMEA messages.
-pub enum NmeaMessages {
-    {% for message in messages%}{{ message.tag }},
+pub enum NmeaMessages { 
+{% for message in messages%}    /// {{ message.descr }}
+    {{ message.tag }},
 {% endfor %}}
 
 {% for message in messages%}/// {{ message.descr }}
+/// Ex: {{ message.ex }}
 #[derive(Debug)]
 pub struct Nmea{{ message.name }}Message { 
     {% for field in message.fields %}pub {{ field.name }}: {{ field.type }},             // {{ field.descr }}
@@ -69,4 +71,5 @@ impl MessageFields for Nmea{{ message.name }}Message {
         NmeaMessages::{{ message.tag }}
     }
 }
+
 {% endfor %}

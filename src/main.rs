@@ -1,6 +1,6 @@
 use std::{any::Any, env, fs::File, io::Read};
 
-use nmeaParseTest::generated::nmea3::{NmeaGllMessage, NmeaMessages};
+use nmeaParseTest::generated::nmea3::*;
 use nmea_parser::NmeaParser;
 
 mod nmea_parser;
@@ -23,6 +23,10 @@ fn callback(msg_type: NmeaMessages, msg: &dyn Any) -> () {
     match msg_type {
         NmeaMessages::GLL => {
             let gll = msg.downcast_ref::<NmeaGllMessage>().unwrap();
+            println!("{:?}", gll);
+        },
+        NmeaMessages::RMC => {
+            let gll = msg.downcast_ref::<NmeaRmcMessage>().unwrap();
             println!("{:?}", gll);
         }
         _ => panic!(),

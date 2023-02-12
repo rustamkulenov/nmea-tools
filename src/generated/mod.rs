@@ -3,7 +3,12 @@ pub mod nmea3;
 pub enum TalkerIds {
     GP, // GPS
     GL, // Glonass
-    GN, // GNSS
+    GA, // Galileo
+    GQ, // QZSS
+    GB, // BeiDou
+    BD, // BeiDou
+    GN, // GNSS - from multiple systems
+
     AI, // AIS
     AG, // Autopilot General
     AP, // Autopilot Magnetic

@@ -5,7 +5,8 @@
             {
                 "name": "Gll",
                 "tag": "GLL",
-                "descr": "GLL NMEA message v3",
+                "descr": "Geographic Position - Latitude/Longitude",
+                "ex": "$GPGLL,3723.2475,N,12158.3416,W,161229.487,A,A*41",
                 "fields": [
                     {
                         "name": "latitude",
@@ -17,7 +18,7 @@
                         "name": "latitude_dir",
                         "type": "u8",
                         "default": "b'N'",
-                        "descr": ""
+                        "descr": "N/S"
                     },
                     {
                         "name": "longitude",
@@ -29,19 +30,105 @@
                         "name": "longitude_dir",
                         "type": "u8",
                         "default": "b'E'",
-                        "descr": ""
+                        "descr": "E/W"
                     },
                     {
                         "name": "utc",
                         "type": "Option<String>",
                         "default": "None",
-                        "descr": ""
+                        "descr": "hhmmss.ss"
                     },
                     {
                         "name": "status",
                         "type": "Option<u8>",
                         "default": "None",
+                        "descr": "A-valid. V-invalid"
+                    },
+                    {
+                        "name": "mode",
+                        "type": "Option<u8>",
+                        "default": "None",
+                        "descr": "Valid in NMEA v3 only. A-autonomous; D-Differential; E-Estimated; M-Manual; S-Simulator; N-Data not valid"
+                    }
+                ]
+            },
+            {
+                "name": "Rmc",
+                "tag": "RMC",
+                "descr": "Recommended Minimum Specific GNSS Data",
+                "ex": "$GPRMC,203522.00,A,5109.0262308,N,11401.8407342,W,0.004,133.4,130522,0.0,E,D*2B",
+                "fields": [
+                    {
+                        "name": "utc",
+                        "type": "Option<String>",
+                        "default": "None",
+                        "descr": "hhmmss.ss"
+                    },
+                    {
+                        "name": "status",
+                        "type": "Option<u8>",
+                        "default": "None",
+                        "descr": "A-valid. V-warning"
+                    },
+                    {
+                        "name": "latitude",
+                        "type": "f64",
+                        "default": "0.0",
                         "descr": ""
+                    },
+                    {
+                        "name": "latitude_dir",
+                        "type": "u8",
+                        "default": "b'N'",
+                        "descr": "N/S"
+                    },
+                    {
+                        "name": "longitude",
+                        "type": "f64",
+                        "default": "0.0",
+                        "descr": ""
+                    },
+                    {
+                        "name": "longitude_dir",
+                        "type": "u8",
+                        "default": "b'E'",
+                        "descr": "E/W"
+                    },
+                    {
+                        "name": "sog",
+                        "type": "f64",
+                        "default": "0.0",
+                        "descr": "Speed over ground, knots"
+                    },
+                    {
+                        "name": "cog",
+                        "type": "f64",
+                        "default": "0.0",
+                        "descr": "Course over ground, degrees True"
+                    },
+                    {
+                        "name": "date",
+                        "type": "Option<String>",
+                        "default": "None",
+                        "descr": "ddmyy"
+                    },
+                    {
+                        "name": "magnetic_variation",
+                        "type": "f64",
+                        "default": "0.0",
+                        "descr": "Magnetic variation, degrees"
+                    },
+                    {
+                        "name": "magnetic_variation_dir",
+                        "type": "u8",
+                        "default": "b'E'",
+                        "descr": "E/W"
+                    },
+                    {
+                        "name": "mode",
+                        "type": "Option<u8>",
+                        "default": "None",
+                        "descr": "Valid in NMEA v3 only. A-autonomous; D-Differential; E-Estimated; M-Manual; S-Simulator; N-Data not valid"
                     }
                 ]
             }

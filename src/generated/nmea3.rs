@@ -9,6 +9,7 @@ impl MessagesMap {
     pub fn add_all_messages(&mut self) {
         let msgs: Vec<Box<dyn MessageFields>> = vec![
             Box::new(NmeaGllMessage::new()),        //  GLL
+            Box::new(NmeaRmcMessage::new()),        //  RMC
             ];
 
         for m in msgs {
@@ -19,19 +20,24 @@ impl MessagesMap {
 }
 
 /// All implemented NMEA messages.
-pub enum NmeaMessages {
+pub enum NmeaMessages { 
+    /// Geographic Position - Latitude/Longitude
     GLL,
+    /// Recommended Minimum Specific GNSS Data
+    RMC,
 }
 
-/// GLL NMEA message v3
+/// Geographic Position - Latitude/Longitude
+/// Ex: $GPGLL,3723.2475,N,12158.3416,W,161229.487,A,A*41
 #[derive(Debug)]
 pub struct NmeaGllMessage { 
     pub latitude: f64,             // 
-    pub latitude_dir: u8,             // 
+    pub latitude_dir: u8,             // N/S
     pub longitude: f64,             // 
-    pub longitude_dir: u8,             // 
-    pub utc: Option<String>,             // 
-    pub status: Option<u8>,             // 
+    pub longitude_dir: u8,             // E/W
+    pub utc: Option<String>,             // hhmmss.ss
+    pub status: Option<u8>,             // A-valid. V-invalid
+    pub mode: Option<u8>,             // Valid in NMEA v3 only. A-autonomous; D-Differential; E-Estimated; M-Manual; S-Simulator; N-Data not valid
     
 }
 
@@ -44,6 +50,7 @@ impl NmeaGllMessage {
             longitude_dir: b'E',
             utc: None,
             status: None,
+            mode: None,
             
         }
     }
@@ -57,6 +64,7 @@ impl MessageFields for NmeaGllMessage {
         self.longitude_dir= b'E';
         self.utc= None;
         self.status= None;
+        self.mode= None;
         
     }
 
@@ -68,6 +76,7 @@ impl MessageFields for NmeaGllMessage {
             3 => &mut self.longitude_dir,
             4 => &mut self.utc,
             5 => &mut self.status,
+            6 => &mut self.mode,
             
             _ => panic!("Invalid field index"),
         }
@@ -75,7 +84,7 @@ impl MessageFields for NmeaGllMessage {
 
     #[inline]
     fn field_count(&self) -> u8 {
-        6
+        7
     }
 
     #[inline]
@@ -93,3 +102,100 @@ impl MessageFields for NmeaGllMessage {
         NmeaMessages::GLL
     }
 }
+
+/// Recommended Minimum Specific GNSS Data
+/// Ex: $GPRMC,203522.00,A,5109.0262308,N,11401.8407342,W,0.004,133.4,130522,0.0,E,D*2B
+#[derive(Debug)]
+pub struct NmeaRmcMessage { 
+    pub utc: Option<String>,             // hhmmss.ss
+    pub status: Option<u8>,             // A-valid. V-warning
+    pub latitude: f64,             // 
+    pub latitude_dir: u8,             // N/S
+    pub longitude: f64,             // 
+    pub longitude_dir: u8,             // E/W
+    pub sog: f64,             // Speed over ground, knots
+    pub cog: f64,             // Course over ground, degrees True
+    pub date: Option<String>,             // ddmyy
+    pub magnetic_variation: f64,             // Magnetic variation, degrees
+    pub magnetic_variation_dir: u8,             // E/W
+    pub mode: Option<u8>,             // Valid in NMEA v3 only. A-autonomous; D-Differential; E-Estimated; M-Manual; S-Simulator; N-Data not valid
+    
+}
+
+impl NmeaRmcMessage {
+    pub fn new() -> NmeaRmcMessage {
+        NmeaRmcMessage { 
+            utc: None,
+            status: None,
+            latitude: 0.0,
+            latitude_dir: b'N',
+            longitude: 0.0,
+            longitude_dir: b'E',
+            sog: 0.0,
+            cog: 0.0,
+            date: None,
+            magnetic_variation: 0.0,
+            magnetic_variation_dir: b'E',
+            mode: None,
+            
+        }
+    }
+}
+
+impl MessageFields for NmeaRmcMessage {
+    fn clear(&mut self) { 
+        self.utc= None;
+        self.status= None;
+        self.latitude= 0.0;
+        self.latitude_dir= b'N';
+        self.longitude= 0.0;
+        self.longitude_dir= b'E';
+        self.sog= 0.0;
+        self.cog= 0.0;
+        self.date= None;
+        self.magnetic_variation= 0.0;
+        self.magnetic_variation_dir= b'E';
+        self.mode= None;
+        
+    }
+
+    fn get_field_mut(&mut self, idx: u8) -> &mut dyn FromSlice {
+        match idx {
+            0 => &mut self.utc,
+            1 => &mut self.status,
+            2 => &mut self.latitude,
+            3 => &mut self.latitude_dir,
+            4 => &mut self.longitude,
+            5 => &mut self.longitude_dir,
+            6 => &mut self.sog,
+            7 => &mut self.cog,
+            8 => &mut self.date,
+            9 => &mut self.magnetic_variation,
+            10 => &mut self.magnetic_variation_dir,
+            11 => &mut self.mode,
+            
+            _ => panic!("Invalid field index"),
+        }
+    }
+
+    #[inline]
+    fn field_count(&self) -> u8 {
+        12
+    }
+
+    #[inline]
+    fn get_addr(&self) -> AddrField<'static> {
+        AddrField::new("RMC".as_bytes())
+    }
+
+    #[inline]
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    #[inline]
+    fn message_type(&self) -> NmeaMessages {
+        NmeaMessages::RMC
+    }
+}
+
